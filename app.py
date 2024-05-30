@@ -8,6 +8,16 @@ from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains import create_retrieval_chain
 from langchain.prompts import PromptTemplate
 
-llm = Ollama(model="llama3")
-response = llm.invoke("tell a cat joke")
-print(response)
+
+app = Flask(__name__)
+
+
+# llm = Ollama(model="llama3")
+# response = llm.invoke("tell a cat joke")
+# print(response)
+
+def start_app():
+    app.run(host="0.0.0.0",port=8080,debug=True)
+
+if __name__ == "__main__":
+    start_app()
