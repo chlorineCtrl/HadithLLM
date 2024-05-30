@@ -11,12 +11,11 @@ from langchain.prompts import PromptTemplate
 
 app = Flask(__name__)
 
-
 cached_llm = Ollama(model="llama3")
 
 
 
-#invoking LLM with user query(needs to have a front end POST method)
+#QUERY POST (needs to have a front end POST method)
 @app.route("/ai", methods=["POST"])
 def aiPost():
     print("Post /ai called")
@@ -32,6 +31,21 @@ def aiPost():
     response_answer = {"answer": response}
     return response_answer
 
+
+
+
+
+#PDF POST (frontend not necessary)
+@app.route("/pdf", methods=["POST"])
+def pdfPost():
+    file = request.files["file"]
+    file_name = file.filename
+    save_file = "pdf/" + file_name
+    file.save(save_file)
+    print(f"filename: {file_name}")
+
+    response = {"status":"Uploaded","filename":file_name}
+    return response
 
 
 
