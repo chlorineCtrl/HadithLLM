@@ -19,9 +19,17 @@ text_splitter = RecursiveCharacterTextSplitter(
     chunk_size=1024, chunk_overlap=80, length_function=len, is_separator_regex=False
 )
 
+raw_prompt = PromptTemplate.from_template(
+    """ 
+    <s>[INST] You are a technical assistant good at searching Hadith docuemnts and provide precise Hadith reference numbers. If you do not have an answer from the provided information say so. [/INST] </s>
+    [INST] {input}
+           Context: {context}
+           Answer:
+    [/INST]
+"""
+)
 
-
-#QUERY POST (needs to have a front end POST method)
+#QUERY POST without RAG (needs to have a front end POST method)
 @app.route("/ai", methods=["POST"])
 def aiPost():
     print("Post /ai called")
@@ -39,6 +47,43 @@ def aiPost():
 
 
 
+#retrival module (QUERY POST with RAG) (needs to have a frontend POST method)
+@app.route("/ask_pdf", methods=["POST"])
+def askPDFPost():
+    print("Post /ask_pdf called")
+    json_content = request.json
+    query = json_content.get("query")
+
+    print(f"query: {query}")
+
+    print("Loading vector store")
+    vector_store = Chroma(persist_directory=folder_path, embedding_function=embedding)
+
+    print("Creating chain")
+    retriever = vector_store.as_retriever(
+        search_type="similarity_score_threshold",
+        search_kwargs={
+            "k": 20,
+            "score_threshold": 0.1,
+        },
+    )
+
+    document_chain = create_stuff_documents_chain(cached_llm, raw_prompt)
+    chain = create_retrieval_chain(retriever, document_chain)
+
+    result = chain.invoke({"input": query})
+
+    print(result)
+
+    sources = []
+    for doc in result["context"]:
+        sources.append(
+            {"source": doc.metadata["source"], "page_content": doc.page_content}
+        )
+
+    response_answer = {"answer": result["answer"], "sources": sources}
+    return response_answer
+
 
 
 #PDF POST (frontend not necessary)
@@ -50,7 +95,7 @@ def pdfPost():
     file.save(save_file)
     print(f"filename: {file_name}")
 
-    #pdf loader
+    #pdf loadng into chromaDB
     loader = PDFPlumberLoader(save_file)
     docs = loader.load_and_split()
     print(f"docs len={len(docs)}")

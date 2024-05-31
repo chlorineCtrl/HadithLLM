@@ -1,0 +1,9 @@
+before using context database:
+
+"query":"explain origins of no renown"
+"answer": "\"No Renown\" is a fascinating topic, and I'd be happy to help you explore its origins!\n\n\"No Renown\" refers to the concept that some individuals or groups may not have gained fame or recognition despite their efforts. This phenomenon can arise from various factors, including:\n\n1. **Lack of visibility**: Without proper promotion, marketing, or networking, an individual's work or achievements might go unnoticed by a broader audience...
+
+after using context database:
+
+"query":"explain origins of no renown"
+"answer":"Those\nwho lack a name or legend for themselves, can often find opportunities to tilt\nthe course of great events one way or another should they rise to the challenge.\nWhether you were a beggar, knight, scholar or noble, circumstances have found\nyou a long way from the life you once lead in the Lands Between."
