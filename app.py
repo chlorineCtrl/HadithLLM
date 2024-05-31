@@ -11,7 +11,7 @@ from langchain.prompts import PromptTemplate
 
 app = Flask(__name__)
 
-folder_path = "db"
+folder_path = "vectorDatabase"
 cached_llm = Ollama(model="llama3")
 
 embedding = FastEmbedEmbeddings()
@@ -30,9 +30,9 @@ raw_prompt = PromptTemplate.from_template(
 )
 
 #QUERY POST without RAG (needs to have a front end POST method)
-@app.route("/ai", methods=["POST"])
+@app.route("/query", methods=["POST"])
 def aiPost():
-    print("Post /ai called")
+    print("Post /query called")
     json_content = request.json
     query = json_content.get("query")
 
@@ -48,9 +48,9 @@ def aiPost():
 
 
 #retrival module (QUERY POST with RAG) (needs to have a frontend POST method)
-@app.route("/ask_pdf", methods=["POST"])
+@app.route("/query_context", methods=["POST"])
 def askPDFPost():
-    print("Post /ask_pdf called")
+    print("Post /query_context called")
     json_content = request.json
     query = json_content.get("query")
 
@@ -91,7 +91,7 @@ def askPDFPost():
 def pdfPost():
     file = request.files["file"]
     file_name = file.filename
-    save_file = "pdf/" + file_name
+    save_file = "dataset/" + file_name
     file.save(save_file)
     print(f"filename: {file_name}")
 
