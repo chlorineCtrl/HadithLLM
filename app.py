@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, jsonify, request
 from langchain_community.llms import Ollama
 from langchain_community.vectorstores import Chroma
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -7,7 +7,9 @@ from langchain_community.document_loaders import PDFPlumberLoader
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains import create_retrieval_chain
 from langchain.prompts import PromptTemplate
-
+from langchain.schema import Document
+import os
+import pandas as pd
 
 app = Flask(__name__)
 
@@ -21,7 +23,7 @@ text_splitter = RecursiveCharacterTextSplitter(
 
 raw_prompt = PromptTemplate.from_template(
     """ 
-    <s>[INST] You are a technical assistant good at searching Hadith docuemnts and provide precise Hadith reference numbers. If you do not have an answer from the provided information say so. [/INST] </s>
+    <s>[INST] You are a technical assistant good at searching islamic docuemnts. Answer with hadith reference,book name,hadith number etc. If you do not have an answer from the provided information say so. [/INST] </s>
     [INST] {input}
            Context: {context}
            Answer:
@@ -29,7 +31,7 @@ raw_prompt = PromptTemplate.from_template(
 """
 )
 
-#QUERY POST without RAG (needs to have a front end POST method)
+
 @app.route("/query", methods=["POST"])
 def aiPost():
     print("Post /query called")
@@ -43,11 +45,8 @@ def aiPost():
     print(response)
 
     response_answer = {"answer": response}
-    return response_answer
+    return jsonify(response_answer)
 
-
-
-#retrival module (QUERY POST with RAG) (needs to have a frontend POST method)
 @app.route("/query_context", methods=["POST"])
 def askPDFPost():
     print("Post /query_context called")
@@ -64,7 +63,7 @@ def askPDFPost():
         search_type="similarity_score_threshold",
         search_kwargs={
             "k": 20,
-            "score_threshold": 0.1,
+            "score_threshold": 0.5,  # Lowering the threshold
         },
     )
 
@@ -77,32 +76,34 @@ def askPDFPost():
 
     sources = []
     for doc in result["context"]:
+        source = doc.metadata.get("source", "Unknown")  # Provide a default value
         sources.append(
-            {"source": doc.metadata["source"], "page_content": doc.page_content}
+            {"source": source, "page_content": doc.page_content}
         )
 
     response_answer = {"answer": result["answer"], "sources": sources}
-    return response_answer
+    return jsonify(response_answer)
 
-
-
-#PDF POST (frontend not necessary)
-@app.route("/pdf", methods=["POST"])
-def pdfPost():
+@app.route("/csv", methods=["POST"])
+def csvPost():
     file = request.files["file"]
     file_name = file.filename
     save_file = "dataset/" + file_name
     file.save(save_file)
     print(f"filename: {file_name}")
 
-    #pdf loadng into chromaDB
-    loader = PDFPlumberLoader(save_file)
-    docs = loader.load_and_split()
+    # Load and process CSV data
+    df = pd.read_csv(save_file, usecols=["Question", "Full Answer"])
+    docs = [
+        Document(page_content=f"Question: {row['Question']}\nAnswer: {row['Full Answer']}")
+        for _, row in df.iterrows()
+    ]
     print(f"docs len={len(docs)}")
 
     chunks = text_splitter.split_documents(docs)
     print(f"chunks len={len(chunks)}")
 
+    # Save new data to the vector store
     vector_store = Chroma.from_documents(
         documents=chunks, embedding=embedding, persist_directory=folder_path
     )
@@ -115,13 +116,10 @@ def pdfPost():
         "doc_len": len(docs),
         "chunks": len(chunks),
     }
-    return response
-
-
-
+    return jsonify(response)
 
 def start_app():
-    app.run(host="0.0.0.0",port=8080,debug=True)
+    app.run(host="0.0.0.0", port=8080, debug=True)
 
 if __name__ == "__main__":
     start_app()
