@@ -18,12 +18,12 @@ cached_llm = Ollama(model="llama3")
 
 embedding = FastEmbedEmbeddings()
 text_splitter = RecursiveCharacterTextSplitter(
-    chunk_size=1024, chunk_overlap=80, length_function=len, is_separator_regex=False
+    chunk_size=512, chunk_overlap=80, length_function=len, is_separator_regex=False
 )
 
 raw_prompt = PromptTemplate.from_template(
     """ 
-    <s>[INST] You are a technical assistant good at searching islamic docuemnts. Answer with hadith reference,book name,hadith number etc. If you do not have an answer from the provided information say so. [/INST] </s>
+    <s>[INST] You are a technical assistant good at searching islamic docuemnts. Answer with hadith reference,book name,hadith number etc. Dont answer additonal questons. If you do not have an answer from the provided information say so. [/INST] </s>
     [INST] {input}
            Context: {context}
            Answer:
@@ -62,7 +62,7 @@ def askPDFPost():
     retriever = vector_store.as_retriever(
         search_type="similarity_score_threshold",
         search_kwargs={
-            "k": 20,
+            "k": 4,
             "score_threshold": 0.5,  # Lowering the threshold
         },
     )
