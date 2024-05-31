@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, render_template, request, jsonify
 from langchain_community.llms import Ollama
 from langchain_community.vectorstores import Chroma
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -8,8 +8,7 @@ from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains import create_retrieval_chain
 from langchain.prompts import PromptTemplate
 
-
-app = Flask(__name__)
+app = Flask(__name__, template_folder='templates')
 
 folder_path = "vectorDatabase"
 cached_llm = Ollama(model="llama3")
@@ -21,7 +20,7 @@ text_splitter = RecursiveCharacterTextSplitter(
 
 raw_prompt = PromptTemplate.from_template(
     """ 
-    <s>[INST] You are a technical assistant good at searching Hadith docuemnts and provide precise Hadith reference numbers. If you do not have an answer from the provided information say so. [/INST] </s>
+    <s>[INST] You are a technical assistant good at searching Hadith docuemnts and You can provide precise Hadith reference numbers. If you do not have an answer from the provided information say so. [/INST] </s>
     [INST] {input}
            Context: {context}
            Answer:
@@ -29,7 +28,10 @@ raw_prompt = PromptTemplate.from_template(
 """
 )
 
-#QUERY POST without RAG (needs to have a front end POST method)
+@app.route("/")
+def index():
+    return render_template('index.html')
+
 @app.route("/query", methods=["POST"])
 def aiPost():
     print("Post /query called")
@@ -43,11 +45,8 @@ def aiPost():
     print(response)
 
     response_answer = {"answer": response}
-    return response_answer
+    return jsonify(response_answer)
 
-
-
-#retrival module (QUERY POST with RAG) (needs to have a frontend POST method)
 @app.route("/query_context", methods=["POST"])
 def askPDFPost():
     print("Post /query_context called")
@@ -82,11 +81,8 @@ def askPDFPost():
         )
 
     response_answer = {"answer": result["answer"], "sources": sources}
-    return response_answer
+    return jsonify(response_answer)
 
-
-
-#PDF POST (frontend not necessary)
 @app.route("/pdf", methods=["POST"])
 def pdfPost():
     file = request.files["file"]
@@ -115,13 +111,10 @@ def pdfPost():
         "doc_len": len(docs),
         "chunks": len(chunks),
     }
-    return response
-
-
-
+    return jsonify(response)
 
 def start_app():
-    app.run(host="0.0.0.0",port=8080,debug=True)
+    app.run(host="0.0.0.0", port=8080, debug=True)
 
 if __name__ == "__main__":
     start_app()

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LLM Query Interface</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      .container {
+        max-width: 600px;
+        margin: auto;
+      }
+      textarea {
+        width: 100%;
+        height: 100px;
+      }
+      button {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        margin-top: 10px;
+      }
+      .response {
+        margin-top: 20px;
+        padding: 10px;
+        border: 1px solid #ddd;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Query the LLM</h1>
+      <textarea id="query" placeholder="Enter your query here..."></textarea>
+      <button onclick="submitQuery()">Submit</button>
+      <div id="response" class="response"></div>
+    </div>
+    <script>
+      async function submitQuery() {
+        const query = document.getElementById("query").value;
+        const responseDiv = document.getElementById("response");
+
+        const response = await fetch("/query", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ query }),
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          responseDiv.innerHTML = `<strong>Response:</strong> ${result.answer}`;
+        } else {
+          responseDiv.innerHTML = `<strong>Error:</strong> ${result.error}`;
+        }
+      }
+    </script>
+  </body>
+</html>
