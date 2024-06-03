@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, render_template, request
 from langchain_community.llms import Ollama
 from langchain_community.vectorstores import Chroma
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -63,7 +63,7 @@ def askPDFPost():
         search_type="similarity_score_threshold",
         search_kwargs={
             "k": 4,
-            "score_threshold": 0.5,  # Lowering the threshold
+            "score_threshold": 0.5,  
         },
     )
 
